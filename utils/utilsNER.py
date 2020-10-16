@@ -167,7 +167,7 @@ def prepare_dataset(path, tokenize, percent=100):
     dataset = collate(featurized_sentences)
     return TensorDataset(*[dataset[k] for k in ("input_ids", "attention_mask", "labels")])
 
-def f1(outputs, average='Macro', ids_to_labels, labels_to_ids):
+def f1(outputs, ids_to_labels, labels_to_ids, average='Macro'):
     y_true, y_pred = [], []
     for out in outputs:
         batch_pred = out['y_pred'].cpu().numpy().tolist()
@@ -192,8 +192,8 @@ def f1(outputs, average='Macro', ids_to_labels, labels_to_ids):
     f1_s = f1_score(y_true_cleaned, y_pred_cleaned, average=average)
     return f1_s
 
-def do_epoch(model, criterion, data, optimizer=None,
-             name=None, ids_to_labels, labels_to_ids):
+def do_epoch(model, criterion, data, ids_to_labels, labels_to_ids, 
+             optimizer=None, name=None):
     epoch_loss = 0
     epoch_f1 = 0
 
@@ -261,14 +261,14 @@ def do_epoch(model, criterion, data, optimizer=None,
     return epoch_loss / batches_count
 
 
-def fit(model, criterion, optimizer, train_data,
-        epochs_count=1, val_data=None, ids_to_labels, labels_to_ids):
+def fit(model, criterion, optimizer, train_data, ids_to_labels, labels_to_ids,
+        epochs_count=1, val_data=None):
     for epoch in range(epochs_count):
         name_prefix = '[{} / {}] '.format(epoch + 1, epochs_count)
-        train_loss = do_epoch(model, criterion, train_data, optimizer,
-                              scheduler, name_prefix + 'Train:')
+        train_loss = do_epoch(model, criterion, train_data, ids_to_labels,
+                               labels_to_ids, optimizer, name_prefix + 'Train:')
 
         if not val_data is None:
-            val_loss = do_epoch(model, criterion, val_data, None,
-                                        name_prefix + '  Val:')
+            val_loss = do_epoch(model, criterion, val_data, ids_to_labels,
+                                 labels_to_ids, None, name_prefix + '  Val:')
             
