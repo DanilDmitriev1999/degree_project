@@ -96,7 +96,7 @@ class Read_data:
     def __getitem__(self, i):
         return self.sentence[i], self.label[i]
     
-def convert_tokens_to_ids(tokens, pad=True):
+def convert_tokens_to_ids(tokens, pad=True, tokenizer):
     max_len = 150
     token_ids = tokenizer.convert_tokens_to_ids(tokens)
     ids = torch.LongTensor([token_ids])
@@ -136,7 +136,7 @@ def subword_tokenize(tokens, labels, tokenizer):
 def subword_tokenize_to_ids(tokens, labels, tokenize):
     assert len(tokens) == len(labels)
     subwords, token_start_idxs, bert_labels = subword_tokenize(tokens, labels, tokenize)
-    subword_ids, mask = convert_tokens_to_ids(subwords)
+    subword_ids, mask = convert_tokens_to_ids(subwords, tokenizer)
     token_starts = torch.zeros(max_len)
     token_starts[token_start_idxs] = 1
     bert_labels = [labels_to_ids[label] for label in bert_labels]
@@ -167,7 +167,7 @@ def prepare_dataset(path, tokenize, percent=100):
     dataset = collate(featurized_sentences)
     return TensorDataset(*[dataset[k] for k in ("input_ids", "attention_mask", "labels")])
 
-def f1(outputs, average='Macro'):
+def f1(outputs, average='Macro', ids_to_labels, labels_to_ids):
     y_true, y_pred = [], []
     for out in outputs:
         batch_pred = out['y_pred'].cpu().numpy().tolist()
@@ -188,10 +188,12 @@ def f1(outputs, average='Macro'):
     ids = [i for i, label in enumerate(y_true) if label != "X"]
     y_true_cleaned = [y_true[i] for i in ids]
     y_pred_cleaned = [y_pred[i] for i in ids]
+
     f1_s = f1_score(y_true_cleaned, y_pred_cleaned, average=average)
     return f1_s
 
-def do_epoch(model, criterion, data, optimizer=None, scheduler = None, name=None):
+def do_epoch(model, criterion, data, optimizer=None,
+             name=None, ids_to_labels, labels_to_ids):
     epoch_loss = 0
     epoch_f1 = 0
 
@@ -237,7 +239,7 @@ def do_epoch(model, criterion, data, optimizer=None, scheduler = None, name=None
 
                 outputs.append(output)
                 
-                f1_s = f1(outputs)
+                f1_s = f1(outputs, ids_to_labels, labels_to_ids)
 
                 outputs = []
 
@@ -248,9 +250,6 @@ def do_epoch(model, criterion, data, optimizer=None, scheduler = None, name=None
                     optimizer.zero_grad()
                     loss.backward()
                     optimizer.step()
-
-                if scheduler:
-                    scheduler.step()
                 
                 progress_bar.update()
                 progress_bar.set_description('{:>5s} Average Loss = {:.5f}, F1-score = {:.3%}'.format(
@@ -262,7 +261,8 @@ def do_epoch(model, criterion, data, optimizer=None, scheduler = None, name=None
     return epoch_loss / batches_count
 
 
-def fit(model, criterion, optimizer, train_data, scheduler=None, epochs_count=1, val_data=None):
+def fit(model, criterion, optimizer, train_data,
+        epochs_count=1, val_data=None, ids_to_labels, labels_to_ids):
     for epoch in range(epochs_count):
         name_prefix = '[{} / {}] '.format(epoch + 1, epochs_count)
         train_loss = do_epoch(model, criterion, train_data, optimizer,
@@ -270,5 +270,5 @@ def fit(model, criterion, optimizer, train_data, scheduler=None, epochs_count=1,
 
         if not val_data is None:
             val_loss = do_epoch(model, criterion, val_data, None,
-                                         scheduler, name_prefix + '  Val:')
+                                        name_prefix + '  Val:')
             
