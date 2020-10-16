@@ -147,7 +147,7 @@ def subword_tokenize_to_ids(tokens, labels, tokenize):
         "labels": padded_bert_labels
     }
 
-def prepare_dataset(path, percent=100, tokenize):
+def prepare_dataset(path, tokenize, percent=100):
     dataset = Read_data(path, percent)
     featurized_sentences = []
     for tokens, labels in dataset:
