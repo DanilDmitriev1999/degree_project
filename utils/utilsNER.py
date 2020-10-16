@@ -14,6 +14,8 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler, TensorDataset
 
 from seqeval.metrics import f1_score
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 class Read_data:
     def __init__(self, path="degree-project/data", percent=100):
         entries = open(path, "r").read().strip().split("\n\n")
