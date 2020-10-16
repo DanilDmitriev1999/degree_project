@@ -135,7 +135,7 @@ def subword_tokenize(tokens, labels, tokenizer):
 
 def subword_tokenize_to_ids(tokens, labels, tokenizer):
     assert len(tokens) == len(labels)
-    subwords, token_start_idxs, bert_labels = subword_tokenize(tokens, labels, tokenize)
+    subwords, token_start_idxs, bert_labels = subword_tokenize(tokens, labels, tokenizer)
     subword_ids, mask = convert_tokens_to_ids(subwords, tokenizer)
     token_starts = torch.zeros(max_len)
     token_starts[token_start_idxs] = 1
