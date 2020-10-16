@@ -147,11 +147,11 @@ def subword_tokenize_to_ids(tokens, labels, tokenize):
         "labels": padded_bert_labels
     }
 
-def prepare_dataset(path, percent=100):
+def prepare_dataset(path, percent=100, tokenize):
     dataset = Read_data(path, percent)
     featurized_sentences = []
     for tokens, labels in dataset:
-        features = subword_tokenize_to_ids(tokens, labels)
+        features = subword_tokenize_to_ids(tokens, labels, tokenize)
         featurized_sentences.append(features)
 
     def collate(featurized_sentences_batch):
