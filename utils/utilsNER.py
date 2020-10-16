@@ -17,7 +17,7 @@ from seqeval.metrics import f1_score
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Read_data:
-    def __init__(self, path="degree-project/data", percent=100):
+    def __init__(self, path, percent=100):
         entries = open(path, "r").read().strip().split("\n\n")
 
         self.sentence, self.label = [], []  # list of lists
@@ -109,7 +109,7 @@ def convert_tokens_to_ids(tokens, pad=True):
     else:
         return ids
 
-def subword_tokenize(tokens, labels):
+def subword_tokenize(tokens, labels, tokenize):
     def flatten(list_of_lists):
         for list in list_of_lists:
             for item in list:
@@ -128,9 +128,9 @@ def subword_tokenize(tokens, labels):
     return subwords, token_start_idxs, bert_labels
 
 
-def subword_tokenize_to_ids(tokens, labels):
+def subword_tokenize_to_ids(tokens, labels, tokenize):
     assert len(tokens) == len(labels)
-    subwords, token_start_idxs, bert_labels = subword_tokenize(tokens, labels)
+    subwords, token_start_idxs, bert_labels = subword_tokenize(tokens, labels, tokenize)
     subword_ids, mask = convert_tokens_to_ids(subwords)
     token_starts = torch.zeros(max_len)
     token_starts[token_start_idxs] = 1
@@ -147,7 +147,7 @@ def subword_tokenize_to_ids(tokens, labels):
         "labels": padded_bert_labels
     }
 
-def prepare_dataset(path='degree-project/data/dev.txt', percent=100):
+def prepare_dataset(path, percent=100):
     dataset = Read_data(path, percent)
     featurized_sentences = []
     for tokens, labels in dataset:
