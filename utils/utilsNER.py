@@ -55,7 +55,7 @@ class Read_data:
     def plot_len_data(self):
         plt.figure(figsize=(20, 6))
         len_sen = [len(i) for i in self.sentence]
-        sns.distplot(len_sen);
+        sns.distplot(len_sen)
 
 
     @staticmethod
@@ -97,6 +97,7 @@ class Read_data:
         return self.sentence[i], self.label[i]
     
 def convert_tokens_to_ids(tokens, pad=True):
+    max_len = 150
     token_ids = tokenizer.convert_tokens_to_ids(tokens)
     ids = torch.LongTensor([token_ids])
     assert ids.size(1) < max_len, print(ids.size(1))
@@ -114,7 +115,11 @@ def subword_tokenize(tokens, labels, tokenizer):
         for list in list_of_lists:
             for item in list:
                 yield item
-
+                
+    
+    SEP = "[SEP]"
+    MASK = "[MASK]"
+    CLS = "[CLS]"
     subwords = list(map(tokenizer.tokenize, tokens))
     subword_lengths = list(map(len, subwords))
     subwords = [CLS] + list(flatten(subwords)) + [SEP]
